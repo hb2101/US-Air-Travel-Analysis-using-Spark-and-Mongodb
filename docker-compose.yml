@@ -1,0 +1,68 @@
+services:
+  spark-master:
+    image: bitnami/spark:latest
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark-master
+    ports:
+      - "8080:8080" # Spark Web UI
+      - "7077:7077" # Spark Master Port
+    networks:
+      - spark-network
+
+  spark-worker-1:
+    image: bitnami/spark:latest
+    container_name: spark-worker-1
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+  spark-worker-2:
+    image: bitnami/spark:latest
+    container_name: spark-worker-2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - spark-network
+    volumes:
+      - ./data/db:/data/db
+    environment:
+      #MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      #MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: 'holiday_data'
+    restart: always
+  # nodejs-app:
+  #   build: ./backend
+  #   container_name: nodejs-app
+  #   working_dir: /usr/src/app
+  #   volumes:
+  #     - ./backend/:/usr/src/app  # Mount the current directory to the container
+  #   ports:
+  #     - "3000:3000"  # Expose the Node.js app on port 3000
+  #   environment:
+  #     - NODE_ENV=development  # Set the environment to development
+  #     - MONGO_URI=mongodb://asd:asdf@localhost:27017/?authSource=admin
+  #   command: ["npm", "run", "dev"]  # Use nodemon or any other development script
+  #   depends_on:
+  #     - mongodb  # Optional, if you have a database service like MongoDB
+  #   networks:
+  #     - spark-network
+
+networks:
+  spark-network:
